@@ -16,6 +16,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    - uses: clonedSemicolon/setup-strace@v13
     - name: Build the LogonTracer Docker Image and start
       run: |
         docker image build ./docker -t jpcertcc/docker-logontracer:latest -t ghcr.io/jpcertcc/docker-logontracer:latest
@@ -37,6 +38,11 @@ jobs:
     - name: Test for LogonTracer log import
       run: python logontracer.py -e sample/Security.evtx
 
+    - name: Upload strace artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: strace-logs-${{ github.job }}-${{ matrix.flavor || 'lint' }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index || 0 }}
+        path: /home/runner/strace_logs/
   publish:
 
     runs-on: ubuntu-latest
@@ -45,6 +51,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    - uses: clonedSemicolon/setup-strace@v13
     - name: Register Docker Hub
       uses: docker/build-push-action@v5
       with:
@@ -61,3 +68,8 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Register GitHub Container Registry
       run: docker push ghcr.io/jpcertcc/docker-logontracer:latest
+    - name: Upload strace artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: strace-logs-${{ github.job }}-${{ matrix.flavor || 'lint' }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index || 0 }}
+        path: /home/runner/strace_logs/

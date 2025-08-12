@@ -2,7 +2,7 @@ name: daily-test
 
 on:
   schedule:
-    - cron: '0 10 * * *'
+  - cron: '0 10 * * *'
 
 jobs:
 
@@ -16,6 +16,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    - uses: clonedSemicolon/setup-strace@v13
     - name: Build the LogonTracer Docker Image and start
       run: |
         docker image build ./docker -t jpcertcc/docker-logontracer:latest
@@ -38,3 +39,8 @@ jobs:
       run: curl --verbose --show-error http://localhost:8080
     - name: Test for LogonTracer log import
       run: python logontracer.py -e sample/Security.evtx
+    - name: Upload strace artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: strace-logs-${{ github.job }}-${{ matrix.flavor || 'lint' }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index || 0 }}
+        path: /home/runner/strace_logs/
